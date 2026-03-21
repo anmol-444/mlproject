@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Student Performance Predictor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --border: rgba(255,255,255,0.07);
+            --accent1: #7c6af7;
+            --accent2: #e066ff;
+            --accent3: #00d4ff;
+            --text: #f0f0f8;
+            --muted: #7a7a9a;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html, body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* Background glow mesh */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 65% 55% at 12% 12%, rgba(124,106,247,0.22) 0%, transparent 65%),
+                radial-gradient(ellipse 55% 50% at 88% 85%, rgba(224,102,255,0.18) 0%, transparent 65%),
+                radial-gradient(ellipse 45% 55% at 68% 22%, rgba(0,212,255,0.09) 0%, transparent 65%);
+            animation: bgPulse 10s ease-in-out infinite alternate;
+            pointer-events: none;
+            z-index: 0;
+        }
+        @keyframes bgPulse {
+            0%   { opacity: 0.65; }
+            100% { opacity: 1; }
+        }
+
+        /* Grid overlay */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(124,106,247,0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(124,106,247,0.035) 1px, transparent 1px);
+            background-size: 55px 55px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(75px);
+            pointer-events: none;
+            z-index: 0;
+            animation: orbFloat 14s ease-in-out infinite;
+        }
+        .orb-1 { width: 35vw; height: 35vw; background: rgba(124,106,247,0.32); top: -10vw; left: -10vw; animation-delay: 0s; }
+        .orb-2 { width: 28vw; height: 28vw; background: rgba(224,102,255,0.22); bottom: -8vw; right: -8vw; animation-delay: -5s; }
+        .orb-3 { width: 18vw; height: 18vw; background: rgba(0,212,255,0.13); top: 38%; right: 4%; animation-delay: -9s; }
+        @keyframes orbFloat {
+            0%, 100% { transform: translateY(0); }
+            50%       { transform: translateY(-2vh); }
+        }
+
+        /* Particles */
+        .particles { position: fixed; inset: 0; pointer-events: none; z-index: 1; overflow: hidden; }
+        .particle  { position: absolute; border-radius: 50%; animation: particleDrift linear infinite; }
+        @keyframes particleDrift {
+            0%   { transform: translateY(100vh) translateX(0) scale(0); opacity: 0; }
+            10%  { opacity: 0.7; }
+            90%  { opacity: 0.4; }
+            100% { transform: translateY(-8vh) translateX(var(--dx)) scale(1); opacity: 0; }
+        }
+
+        /* ── HERO: uses vh so it always fits ── */
+        .hero {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            width: 100%;
+            max-width: 860px;
+            padding: 0 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Badge */
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            background: rgba(124,106,247,0.1);
+            border: 1px solid rgba(124,106,247,0.28);
+            color: var(--accent1);
+            font-size: clamp(9px, 1vh, 11px);
+            font-weight: 600;
+            letter-spacing: 0.13em;
+            text-transform: uppercase;
+            padding: clamp(3px, 0.6vh, 6px) 14px;
+            border-radius: 100px;
+            margin-bottom: clamp(8px, 1.5vh, 16px);
+            animation: fadeDown 0.7s 0.1s cubic-bezier(0.22,1,0.36,1) both;
+        }
+        .tag-dot {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--accent1);
+            animation: blink 2s ease-in-out infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; box-shadow: 0 0 5px var(--accent1); }
+            50%       { opacity: 0.3; }
+        }
+
+        /* Headline */
+        .headline {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            line-height: 1.05;
+            margin-bottom: clamp(8px, 1.6vh, 18px);
+            animation: fadeUp 0.8s 0.2s cubic-bezier(0.22,1,0.36,1) both;
+        }
+        .headline-line1 {
+            display: block;
+            font-size: clamp(24px, 6.5vh, 68px);
+            color: var(--text);
+        }
+        .headline-line2 {
+            display: block;
+            font-size: clamp(24px, 6.5vh, 68px);
+            background: linear-gradient(135deg, var(--accent1) 0%, var(--accent2) 50%, var(--accent3) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            background-size: 200%;
+            animation: shimmer 4s ease-in-out infinite alternate, fadeUp 0.8s 0.2s cubic-bezier(0.22,1,0.36,1) both;
+        }
+        @keyframes shimmer {
+            0%   { background-position: 0% 50%; }
+            100% { background-position: 100% 50%; }
+        }
+
+        /* Description */
+        .description {
+            font-size: clamp(11px, 1.7vh, 15px);
+            font-weight: 300;
+            color: var(--muted);
+            line-height: 1.6;
+            max-width: 420px;
+            margin-bottom: clamp(10px, 2vh, 22px);
+            animation: fadeUp 0.8s 0.35s cubic-bezier(0.22,1,0.36,1) both;
+        }
+
+        /* Stats */
+        .stats {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: clamp(16px, 3vw, 36px);
+            margin-bottom: clamp(10px, 2vh, 22px);
+            animation: fadeUp 0.8s 0.45s cubic-bezier(0.22,1,0.36,1) both;
+        }
+        .stat-value {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(16px, 2.5vh, 26px);
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent3), var(--accent1));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .stat-label {
+            font-size: clamp(8px, 1vh, 11px);
+            color: var(--muted);
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-top: 1px;
+        }
+        .stat-divider { width: 1px; height: clamp(20px, 3vh, 34px); background: var(--border); }
+
+        /* Button */
+        .cta-wrap {
+            margin-bottom: clamp(6px, 1.2vh, 14px);
+            animation: fadeUp 0.8s 0.55s cubic-bezier(0.22,1,0.36,1) both;
+        }
+        .cta-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: clamp(10px, 1.6vh, 15px) clamp(24px, 3vw, 40px);
+            background: linear-gradient(135deg, var(--accent1), var(--accent2));
+            color: #fff;
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(12px, 1.7vh, 15px);
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-decoration: none;
+            border-radius: 14px;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.25s, box-shadow 0.3s;
+            box-shadow: 0 5px 26px rgba(124,106,247,0.4);
+            border: none;
+            cursor: pointer;
+        }
+        .cta-btn::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 60%);
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .cta-btn::after {
+            content: '';
+            position: absolute;
+            top: -50%; left: -70%;
+            width: 50%; height: 200%;
+            background: rgba(255,255,255,0.18);
+            transform: skewX(-20deg);
+            transition: left 0.5s ease;
+        }
+        .cta-btn:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 10px 34px rgba(124,106,247,0.55); }
+        .cta-btn:hover::before { opacity: 1; }
+        .cta-btn:hover::after  { left: 140%; }
+        .cta-btn:active { transform: scale(0.97); }
+
+        .arrow {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 22px; height: 22px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.18);
+            font-size: 12px;
+            transition: transform 0.3s;
+        }
+        .cta-btn:hover .arrow { transform: translateX(4px); }
+
+        /* Hint */
+        .hint {
+            font-size: clamp(9px, 1.1vh, 12px);
+            color: var(--muted);
+            margin-bottom: clamp(10px, 2vh, 26px);
+            animation: fadeUp 0.8s 0.65s cubic-bezier(0.22,1,0.36,1) both;
+        }
+
+        /* Feature cards */
+        .features {
+            display: flex;
+            gap: clamp(8px, 1.4vw, 16px);
+            justify-content: center;
+            animation: fadeUp 0.8s 0.72s cubic-bezier(0.22,1,0.36,1) both;
+        }
+        .feature-card {
+            background: rgba(26,26,38,0.88);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: clamp(10px, 1.5vh, 18px) clamp(12px, 1.5vw, 20px);
+            width: clamp(130px, 16vw, 175px);
+            text-align: left;
+            backdrop-filter: blur(12px);
+            transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+            position: relative; overflow: hidden;
+        }
+        .feature-card::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(124,106,247,0.07), transparent);
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .feature-card:hover { border-color: rgba(124,106,247,0.38); transform: translateY(-4px); box-shadow: 0 10px 26px rgba(0,0,0,0.45); }
+        .feature-card:hover::before { opacity: 1; }
+        .feature-icon { font-size: clamp(16px, 2.2vh, 22px); margin-bottom: clamp(4px, 0.8vh, 8px); }
+        .feature-title { font-family: 'Syne', sans-serif; font-size: clamp(10px, 1.3vh, 13px); font-weight: 700; color: var(--text); margin-bottom: 3px; }
+        .feature-desc  { font-size: clamp(9px, 1.1vh, 11.5px); color: var(--muted); line-height: 1.45; font-weight: 300; }
+
+        @keyframes fadeUp {
+            0%   { opacity: 0; transform: translateY(14px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeDown {
+            0%   { opacity: 0; transform: translateY(-10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="particles" id="particles"></div>
+
+    <div class="hero">
+        <div class="tag"><span class="tag-dot"></span>ML-Powered Prediction</div>
+
+        <h1 class="headline">
+            <span class="headline-line1">Predict Your</span>
+            <span class="headline-line2">Maths Score</span>
+        </h1>
+
+        <p class="description">
+            Enter your academic profile and instantly get an AI-powered prediction of your Mathematics exam performance.
+        </p>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value">7</div>
+                <div class="stat-label">Features</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat">
+                <div class="stat-value">100</div>
+                <div class="stat-label">Max Score</div>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat">
+                <div class="stat-value">ML</div>
+                <div class="stat-label">Powered</div>
+            </div>
+        </div>
+
+        <div class="cta-wrap">
+            <a href="/predictdata" class="cta-btn">
+                Get Your Prediction
+                <span class="arrow">→</span>
+            </a>
+        </div>
+
+        <p class="hint">No sign-up needed &nbsp;·&nbsp; Instant results &nbsp;·&nbsp; Free to use</p>
+
+        <div class="features">
+            <div class="feature-card">
+                <div class="feature-icon">🎓</div>
+                <div class="feature-title">Academic Profile</div>
+                <div class="feature-desc">Based on real student data patterns</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <div class="feature-title">Instant Result</div>
+                <div class="feature-desc">Prediction in under a second</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔮</div>
+                <div class="feature-title">Smart Model</div>
+                <div class="feature-desc">Trained on thousands of scores</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const container = document.getElementById('particles');
+        const colors = ['#7c6af7','#e066ff','#00d4ff','#ffffff'];
+        for (let i = 0; i < 20; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            const size = Math.random() * 3 + 2;
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            p.style.cssText = `
+                width:${size}px; height:${size}px; background:${color};
+                left:${Math.random()*100}%; bottom:-10px; opacity:0.5;
+                --dx:${(Math.random()-0.5)*160}px;
+                animation-duration:${Math.random()*12+10}s;
+                animation-delay:-${Math.random()*12}s;
+                box-shadow:0 0 ${size*2}px ${color};
+            `;
+            container.appendChild(p);
+        }
+    </script>
+</body>
+</html>
